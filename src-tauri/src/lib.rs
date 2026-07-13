@@ -9,7 +9,6 @@ pub mod utils;
 use std::sync::{Arc, Mutex};
 use tokio::sync::RwLock;
 use tauri::Manager;
-use crate::commands;
 use crate::device::manager::DeviceManager;
 use crate::transfer::manager::TransferManager;
 use crate::utils::config::load_config;
