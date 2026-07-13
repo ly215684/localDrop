@@ -23,62 +23,13 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["msi", "nsis", "portable"],
+    "targets": "all",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ],
-    "windows": {
-      "allowDowngrades": true,
-      "bundleVCRuntime": false,
-      "webviewInstallMode": {
-        "silent": true,
-        "type": "downloadBootstrapper"
-      },
-      "nsis": null,
-      "wix": null
-    },
-    "macOS": {
-      "hardenedRuntime": true,
-      "minimumSystemVersion": "10.15",
-      "dmg": {
-        "appPosition": {
-          "x": 180,
-          "y": 170
-        },
-        "applicationFolderPosition": {
-          "x": 480,
-          "y": 170
-        },
-        "windowSize": {
-          "height": 400,
-          "width": 660
-        }
-      }
-    },
-    "iOS": {
-      "minimumSystemVersion": "15.0"
-    },
-    "android": {
-      "minSdkVersion": 24,
-      "autoIncrementVersionCode": false
-    },
-    "linux": {
-      "appimage": {
-        "bundleMediaFramework": false,
-        "files": {}
-      },
-      "deb": {
-        "files": {}
-      },
-      "rpm": {
-        "epoch": 0,
-        "files": {},
-        "release": "1"
-      }
-    }
+    ]
   }
 }
