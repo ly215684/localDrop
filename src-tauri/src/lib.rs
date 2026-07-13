@@ -9,11 +9,11 @@ pub mod utils;
 use std::sync::{Arc, Mutex};
 use tokio::sync::RwLock;
 use tauri::Manager;
-use localdrop_lib::commands;
-use localdrop_lib::device::manager::DeviceManager;
-use localdrop_lib::transfer::manager::TransferManager;
-use localdrop_lib::utils::config::load_config;
-use localdrop_lib::persistence::sqlite::Database;
+use crate::commands;
+use crate::device::manager::DeviceManager;
+use crate::transfer::manager::TransferManager;
+use crate::utils::config::load_config;
+use crate::persistence::sqlite::Database;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
