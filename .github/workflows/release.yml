@@ -106,18 +106,25 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Android SDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
           api-level: 34
           build-tools: 34.0.0
-          ndk: 27.2.12479018
+          ndk: 26.3.11579264
+          cmdline-tools: latest
 
-      - name: Setup NDK_HOME
+      - name: Verify NDK installation
         run: |
-          echo "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> $GITHUB_ENV
-          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/27.2.12479018" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls -la $ANDROID_HOME/ndk/
+          export NDK_HOME=$ANDROID_HOME/ndk/26.3.11579264
+          echo "NDK_HOME=$NDK_HOME"
+          ls -la $NDK_HOME/
+          echo "NDK_HOME=$NDK_HOME" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$NDK_HOME" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$NDK_HOME" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: npm ci
@@ -130,11 +137,6 @@ jobs:
 
       - name: Build Android APK
         run: npm run tauri android build -- --apk
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
-          NDK_HOME: ${{ env.NDK_HOME }}
-          ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
-          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
