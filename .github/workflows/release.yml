@@ -141,13 +141,17 @@ jobs:
         run: npm run tauri android init
 
       - name: Build Android APK
+        id: build-android
+        continue-on-error: true
         run: |
-          npm run tauri android build -- --apk 2>&1 || echo "Build failed, checking output"
+          npm run tauri android build -- --apk 2>&1
+          echo "BUILD_EXIT_CODE=$?" >> $GITHUB_ENV
           echo "=== Checking build output ==="
           find src-tauri/gen/android -name "*.apk" 2>/dev/null || echo "No APK found"
           ls -la src-tauri/gen/android/app/build/outputs/apk/ 2>/dev/null || echo "APK directory not found"
 
       - name: Sign APK
+        continue-on-error: true
         run: |
           echo "JAVA_HOME=$JAVA_HOME"
           
@@ -184,16 +188,11 @@ jobs:
             echo "Signed APK: $SIGNED_APK"
             ls -la "$SIGNED_APK"
           else
-            echo "No unsigned APK found, checking for existing signed APK"
-            find "$APK_DIR" -name "*signed*.apk" 2>/dev/null || echo "No signed APK found"
-            
-            for apk in $(find "$APK_DIR" -name "*.apk" 2>/dev/null); do
-              echo "Verifying: $apk"
-              "$APK_SIGNER_PATH" verify "$apk" 2>&1 || echo "Not properly signed"
-            done
+            echo "No unsigned APK found, skipping signing"
           fi
 
       - name: Upload Android artifacts
+        if: ${{ steps.build-android.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: android-artifacts

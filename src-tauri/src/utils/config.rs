@@ -45,24 +45,25 @@ fn get_device_type() -> String {
 }
 
 pub fn get_config_dir() -> io::Result<std::path::PathBuf> {
-    #[cfg(target_os = "android")]
-    {
-        let dir = tauri::api::path::data_dir()
-            .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Cannot find data directory"))?;
-        let path = dir.join("localdrop");
-        fs::create_dir_all(&path)?;
-        Ok(path)
-    }
+    let dir = dirs::data_dir()
+        .or_else(|| {
+            #[cfg(target_os = "android")]
+            {
+                let mut home = std::env::var("HOME").ok().map(std::path::PathBuf::from);
+                if let Some(ref mut h) = home {
+                    h.push(".local");
+                    h.push("share");
+                }
+                home
+            }
+            #[cfg(not(target_os = "android"))]
+            None
+        })
+        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Cannot find data directory"))?
+        .join("localdrop");
     
-    #[cfg(not(target_os = "android"))]
-    {
-        let dir = dirs::data_dir()
-            .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Cannot find data directory"))?
-            .join("localdrop");
-        
-        fs::create_dir_all(&dir)?;
-        Ok(dir)
-    }
+    fs::create_dir_all(&dir)?;
+    Ok(dir)
 }
 
 pub fn get_config_path() -> io::Result<std::path::PathBuf> {
