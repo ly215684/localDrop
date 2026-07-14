@@ -143,11 +143,37 @@ jobs:
       - name: Build Android APK
         run: npm run tauri android build -- --apk
 
+      - name: Sign APK
+        run: |
+          KEYSTORE_PATH=debug.keystore
+          KEY_ALIAS=debug
+          KEY_PASSWORD=android
+          STORE_PASSWORD=android
+          
+          keytool -genkey -v -keystore $KEYSTORE_PATH -keyalg RSA -keysize 2048 -validity 10000 -alias $KEY_ALIAS -storepass $STORE_PASSWORD -keypass $KEY_PASSWORD -dname "CN=Debug, OU=Debug, O=Debug, L=Debug, ST=Debug, C=US" 2>/dev/null
+          
+          APK_DIR=src-tauri/gen/android/app/build/outputs/apk/release
+          UNSIGNED_APK=$(find $APK_DIR -name "*-unsigned.apk" 2>/dev/null)
+          
+          if [ -n "$UNSIGNED_APK" ]; then
+            BASENAME=$(basename "$UNSIGNED_APK" -unsigned.apk)
+            SIGNED_APK="$APK_DIR/$BASENAME-signed.apk"
+            
+            jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore $KEYSTORE_PATH -storepass $STORE_PASSWORD -keypass $KEY_PASSWORD "$UNSIGNED_APK" $KEY_ALIAS
+            zipalign -v 4 "$UNSIGNED_APK" "$SIGNED_APK"
+            
+            echo "Signed APK: $SIGNED_APK"
+          else
+            echo "No unsigned APK found, checking for existing signed APK"
+            ls -la $APK_DIR/*.apk 2>/dev/null || echo "No APK files found"
+          fi
+
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-artifacts
           path: |
+            src-tauri/gen/android/app/build/outputs/apk/**/*-signed.apk
             src-tauri/gen/android/app/build/outputs/apk/**/*.apk
 
   build-ios:
