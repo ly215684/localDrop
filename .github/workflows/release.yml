@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
@@ -18,7 +21,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
 
       - name: Install Rust
@@ -46,7 +49,6 @@ jobs:
           path: |
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/portable/*.zip
 
   build-macos:
     runs-on: macos-latest
@@ -56,7 +58,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
 
       - name: Install Rust
@@ -92,7 +94,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
 
       - name: Install Rust
@@ -157,7 +159,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
 
       - name: Install Rust
@@ -193,35 +195,42 @@ jobs:
     steps:
       - name: Download Windows artifacts
         uses: actions/download-artifact@v4
+        if: ${{ needs.build-windows.result == 'success' }}
         with:
           name: windows-artifacts
           path: windows/
 
       - name: Download macOS artifacts
         uses: actions/download-artifact@v4
+        if: ${{ needs.build-macos.result == 'success' }}
         with:
           name: macos-artifacts
           path: macos/
 
       - name: Download Android artifacts
         uses: actions/download-artifact@v4
+        if: ${{ needs.build-android.result == 'success' }}
         with:
           name: android-artifacts
           path: android/
 
       - name: Download iOS artifacts
         uses: actions/download-artifact@v4
-        if: ${{ vars.ENABLE_IOS_BUILD == 'true' }}
+        if: ${{ vars.ENABLE_IOS_BUILD == 'true' && needs.build-ios.result == 'success' }}
         with:
           name: ios-artifacts
           path: ios/
 
       - name: List all artifacts
         run: |
-          find windows -type f 2>/dev/null || true
-          find macos -type f 2>/dev/null || true
-          find android -type f 2>/dev/null || true
-          find ios -type f 2>/dev/null || true
+          echo "=== Windows ==="
+          find windows -type f 2>/dev/null || echo "none"
+          echo "=== macOS ==="
+          find macos -type f 2>/dev/null || echo "none"
+          echo "=== Android ==="
+          find android -type f 2>/dev/null || echo "none"
+          echo "=== iOS ==="
+          find ios -type f 2>/dev/null || echo "none"
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
@@ -229,11 +238,8 @@ jobs:
           files: |
             windows/**/*.msi
             windows/**/*.exe
-            windows/**/*.zip
             macos/**/*.dmg
-            macos/**/*.app
             android/**/*.apk
-            android/**/*.aab
             ios/**/*.ipa
           draft: false
         env:
