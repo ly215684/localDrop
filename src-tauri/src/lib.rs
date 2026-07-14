@@ -18,8 +18,22 @@ use crate::persistence::sqlite::Database;
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            let config = Arc::new(Mutex::new(load_config().unwrap_or_default()));
-            let database = Arc::new(Mutex::new(Database::new().unwrap()));
+            let config = match load_config() {
+                Ok(c) => Arc::new(Mutex::new(c)),
+                Err(e) => {
+                    eprintln!("Failed to load config: {}, using default", e);
+                    Arc::new(Mutex::new(Default::default()))
+                }
+            };
+            
+            let database = match Database::new() {
+                Ok(db) => Arc::new(Mutex::new(db)),
+                Err(e) => {
+                    eprintln!("Failed to create database: {}", e);
+                    return Err(Box::new(e));
+                }
+            };
+            
             let device_manager = Arc::new(Mutex::new(DeviceManager::new(Arc::clone(&config))));
             let transfer_manager = Arc::new(RwLock::new(TransferManager::new(Arc::clone(&database), Arc::clone(&config))));
 
