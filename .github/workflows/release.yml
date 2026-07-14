@@ -150,15 +150,12 @@ jobs:
       - name: Sign APK
         run: |
           echo "JAVA_HOME=$JAVA_HOME"
-          echo "PATH=$PATH"
           
           KEYTOOL_PATH="$JAVA_HOME/bin/keytool"
-          JARSIGNER_PATH="$JAVA_HOME/bin/jarsigner"
-          ZIPALIGN_PATH="$ANDROID_HOME/build-tools/34.0.0/zipalign"
+          APK_SIGNER_PATH="$ANDROID_HOME/build-tools/34.0.0/apksigner"
           
           echo "keytool path: $KEYTOOL_PATH"
-          echo "jarsigner path: $JARSIGNER_PATH"
-          echo "zipalign path: $ZIPALIGN_PATH"
+          echo "apksigner path: $APK_SIGNER_PATH"
           
           APK_DIR=src-tauri/gen/android/app/build/outputs/apk
           echo "APK directory: $APK_DIR"
@@ -178,14 +175,22 @@ jobs:
             BASENAME=$(basename "$UNSIGNED_APK" -unsigned.apk)
             SIGNED_APK=$(dirname "$UNSIGNED_APK")/"$BASENAME-signed.apk"
             
-            "$JARSIGNER_PATH" -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -keypass "$KEY_PASSWORD" "$UNSIGNED_APK" "$KEY_ALIAS"
-            "$ZIPALIGN_PATH" -v 4 "$UNSIGNED_APK" "$SIGNED_APK"
+            cp "$UNSIGNED_APK" "$SIGNED_APK"
+            
+            "$APK_SIGNER_PATH" sign --ks "$KEYSTORE_PATH" --ks-pass pass:"$STORE_PASSWORD" --key-pass pass:"$KEY_PASSWORD" --ks-key-alias "$KEY_ALIAS" "$SIGNED_APK"
+            
+            "$APK_SIGNER_PATH" verify "$SIGNED_APK"
             
             echo "Signed APK: $SIGNED_APK"
             ls -la "$SIGNED_APK"
           else
             echo "No unsigned APK found, checking for existing signed APK"
             find "$APK_DIR" -name "*signed*.apk" 2>/dev/null || echo "No signed APK found"
+            
+            for apk in $(find "$APK_DIR" -name "*.apk" 2>/dev/null); do
+              echo "Verifying: $apk"
+              "$APK_SIGNER_PATH" verify "$apk" 2>&1 || echo "Not properly signed"
+            done
           fi
 
       - name: Upload Android artifacts
